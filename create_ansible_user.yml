@@ -1,0 +1,23 @@
+# create a sudo user 'ansible' with group 'automation'
+
+- name: Ensure we have an automation group
+  group:
+    name: automation
+    state: present
+
+- name: Allow automation group to have password-less sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%automation'
+    line: '%automation ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+
+- name: Add sudoers users to automation group
+  user: name=ansible groups=automation append=yes state=present createhome=yes
+
+- name: Set up ssh keys for the ansible user
+  authorized_key: user=ansible key="{{item}}"
+  with_file:
+    - /etc/ansible/key/ansible.pub
+
